@@ -1,0 +1,12 @@
+Metric,Value
+Nodes,8192
+Edges,24567
+Density,0.000732
+Avg Degree,5.9978
+Diameter,7
+Radius,4
+Avg Clustering,0.007183
+Mean Closeness,0.240251
+Mean Betweenness,0.000390
+Communities,24
+Modularity,0.386147

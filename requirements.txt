@@ -1,0 +1,14 @@
+networkx
+numpy
+matplotlib
+pandas
+scipy
+python-louvain
+jupyter
+notebook
+seaborn
+plotly
+tqdm
+scikit-network
+community
+python-docx
