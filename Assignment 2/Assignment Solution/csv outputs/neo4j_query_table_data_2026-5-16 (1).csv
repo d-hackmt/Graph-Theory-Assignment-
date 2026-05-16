@@ -1,0 +1,10 @@
+Segment,Category,Customers,Revenue,AvgProfit
+Consumer,Technology,2025,2586980.0,65.0
+Consumer,Furniture,1948,2228150.0,31.0
+Consumer,Office Supplies,2457,2103038.0,16.0
+Corporate,Technology,1174,1499854.0,62.0
+Corporate,Furniture,1127,1313030.0,28.0
+Corporate,Office Supplies,1422,1223294.0,18.0
+Home Office,Technology,709,952015.0,72.0
+Home Office,Furniture,690,755493.0,28.0
+Home Office,Office Supplies,895,744490.0,17.0

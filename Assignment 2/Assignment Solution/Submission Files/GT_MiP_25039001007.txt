@@ -1,0 +1,145 @@
+// ============================================================
+// GT_MiP_25039001007.txt
+// Assignment 2 — Graph Theory (Mini Project)
+// Dataset : Global Superstore (~51,290 rows)
+// Tool    : Neo4j AuraDB + Graph Data Science (GDS)
+// ============================================================
+
+
+// ============================================================
+// STEP 1 — GRAPH SCHEMA  (Run this block first)
+//
+// Node Labels:
+//   Customer { customerId, name, segment }
+//   Product  { productId, name, category, subCategory }
+//   Order    { orderId, orderDate, shipDate, shipMode, priority }
+//   Location { locationId, city, state, country, region, market }
+//
+// Relationships:
+//   (Customer)-[:PLACED]                      ->(Order)
+//   (Order)   -[:CONTAINS {sales,profit,...}] ->(Product)
+//   (Order)   -[:SHIPPED_TO]                  ->(Location)
+// ============================================================
+
+CREATE CONSTRAINT customer_unique IF NOT EXISTS
+  FOR (c:Customer) REQUIRE c.customerId IS UNIQUE;
+
+CREATE CONSTRAINT order_unique IF NOT EXISTS
+  FOR (o:Order) REQUIRE o.orderId IS UNIQUE;
+
+CREATE CONSTRAINT product_unique IF NOT EXISTS
+  FOR (p:Product) REQUIRE p.productId IS UNIQUE;
+
+CREATE CONSTRAINT location_unique IF NOT EXISTS
+  FOR (l:Location) REQUIRE l.locationId IS UNIQUE;
+
+
+// ============================================================
+// STEP 2 — DATA IMPORT
+//
+// Method: Neo4j AuraDB Import Tool (UI-based)
+//   superstore.csv was uploaded directly via the Neo4j Aura
+//   Import UI at console.neo4j.io → Import → Local file.
+//   Node labels, property mappings, and data types were
+//   configured visually as per the schema in Step 1.
+//
+// Property type mappings applied during import:
+//   Sales, Profit, Discount, Shipping.Cost  → Float
+//   Quantity                                 → Integer
+//   All other fields                         → String
+//
+// Import result:
+//   Nodes        : 43,836  (Customer: 4873, Order: 25035,
+//                           Product: 10292, Location: 3636)
+//   Relationships: 102,729 (PLACED + CONTAINS + SHIPPED_TO)
+// ============================================================
+
+
+// ---- 2g. Verify: Node and Relationship counts ----
+MATCH (n)
+RETURN labels(n)[0] AS Label, count(n) AS Count
+ORDER BY Count DESC;
+
+MATCH ()-[r]->()
+RETURN type(r) AS Relationship, count(r) AS Count;
+
+// ---- 2h. Display full relationship (sample) ----
+MATCH path =
+  (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product),
+  (o)-[:SHIPPED_TO]->(l:Location)
+RETURN path LIMIT 25;
+
+
+// ============================================================
+// STEP 3 — GDS COMPLEX INSIGHTS
+// ============================================================
+
+// ---- Step 3 Prep: Create direct (Customer)-[:ORDERED]->(Product) ----
+// Aggregates all orders into a weighted bipartite graph for analytics
+MATCH (c:Customer)-[:PLACED]->(o:Order)-[r:CONTAINS]->(p:Product)
+WITH c, p,
+     count(o)        AS orderCount,
+     sum(r.Sales)    AS totalSales,
+     sum(r.Profit)   AS totalProfit
+MERGE (c)-[rel:ORDERED]->(p)
+  SET rel.orderCount  = orderCount,
+      rel.totalSales  = totalSales,
+      rel.totalProfit = totalProfit;
+
+
+// ============================================================
+// GDS INSIGHT 1: Product Centrality — Most Influential Products
+//
+// Technique  : Degree Centrality with Cross-Segment Reach
+// Graph used : (Customer)-[:ORDERED]->(Product)
+// What it finds:
+//   Products purchased by the highest number of UNIQUE customers
+//   across all three segments (Consumer, Corporate, Home Office)
+//   are the most "central" nodes in the network. A product
+//   reaching all 3 segments is a true network hub — its removal
+//   would disconnect the most customers from the store graph.
+//   This is equivalent to measuring in-degree centrality on the
+//   bipartite Customer-Product graph.
+// ============================================================
+
+MATCH (c:Customer)-[r:ORDERED]->(p:Product)
+WITH p.`Product.Name`          AS Product,
+     p.Category                 AS Category,
+     p.`Sub.Category`           AS SubCategory,
+     count(DISTINCT c)          AS UniqueCustomers,
+     count(DISTINCT c.Segment)  AS SegmentsReached,
+     round(sum(r.totalSales))   AS TotalSales
+RETURN Product, Category, SubCategory,
+       UniqueCustomers, SegmentsReached, TotalSales
+ORDER BY UniqueCustomers DESC, SegmentsReached DESC
+LIMIT 15;
+
+
+// ============================================================
+// GDS INSIGHT 2: Customer Segment Behaviour by Product Category
+//
+// Technique  : Graph Aggregation / Community Profile Analysis
+// Graph used : (Customer)-[:ORDERED]->(Product)
+// What it finds:
+//   By grouping customers along their Segment (Consumer,
+//   Corporate, Home Office) and traversing ORDERED edges to
+//   Product categories, we reveal how each customer community
+//   differs in purchasing behaviour. This is analogous to a
+//   community-level feature summary after Louvain detection —
+//   showing which product categories drive each segment's
+//   revenue and profit, and where segments overlap or diverge.
+// ============================================================
+
+MATCH (c:Customer)-[r:ORDERED]->(p:Product)
+WITH c.Segment          AS Segment,
+     p.Category         AS Category,
+     count(DISTINCT c)  AS Customers,
+     round(sum(r.totalSales))   AS Revenue,
+     round(avg(r.totalProfit))  AS AvgProfit
+RETURN Segment, Category, Customers, Revenue, AvgProfit
+ORDER BY Segment, Revenue DESC;
+
+
+// ============================================================
+// END — GT_MiP_25039001007.txt
+// ============================================================
