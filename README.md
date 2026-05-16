@@ -6,14 +6,14 @@ Coursework submissions for the Graph Theory course covering synthetic network co
 
 ## Assignments
 
-### [Assignment 1](Assignment%201/About_Assignment_1.md) — Synthetic Network Construction & Analysis
+### [Assignment 1](Assignment%201/README.md) — Synthetic Network Construction & Analysis
 > Construct a 10,000-node real-life network using Kronecker Graphs and derive insights using NetworkX and Gephi.
 
 - **Marks:** 30
 - **Tools:** Python (NetworkX, Matplotlib, python-louvain), Gephi
 - **Key work:** Kronecker graph generation · 5 layout visualisations · 9 network metrics · Gephi layouts + statistics
 
-### [Assignment 2](Assignment%202/About%20ASSIGNMENT2.md) — Graph Database Modelling & Insights
+### [Assignment 2](Assignment%202/README.md) — Graph Database Modelling & Insights
 > Model the Global Superstore dataset as a property graph in Neo4j and derive two complex graph analytics insights.
 
 - **Marks:** 20
